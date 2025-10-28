@@ -1,0 +1,152 @@
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Save } from "lucide-react";
+
+export default function TechnicianDialog({ 
+  open, 
+  onOpenChange, 
+  technician,
+  onSave,
+  isSaving 
+}) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    specialization: "",
+    status: "active",
+  });
+
+  useEffect(() => {
+    if (technician) {
+      setFormData({
+        name: technician.name || "",
+        email: technician.email || "",
+        phone: technician.phone || "",
+        specialization: technician.specialization || "",
+        status: technician.status || "active",
+      });
+    } else {
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        specialization: "",
+        status: "active",
+      });
+    }
+  }, [technician, open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">
+            {technician ? 'Techniker bearbeiten' : 'Neuer Techniker'}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="Max Mustermann"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">E-Mail</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="max@beispiel.de"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefon</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+49 123 456789"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="specialization">Spezialisierung</Label>
+            <Input
+              id="specialization"
+              value={formData.specialization}
+              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+              placeholder="z.B. Elektrotechnik, Klimatechnik"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Aktiv</SelectItem>
+                <SelectItem value="inactive">Inaktiv</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? 'Speichert...' : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

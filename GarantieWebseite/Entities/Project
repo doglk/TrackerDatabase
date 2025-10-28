@@ -1,0 +1,44 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Projektname"
+    },
+    "description": {
+      "type": "string",
+      "description": "Projektbeschreibung"
+    },
+    "technician_id": {
+      "type": "string",
+      "description": "ID des zugewiesenen Technikers"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Startdatum"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Enddatum"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "geplant",
+        "laufend",
+        "abgeschlossen"
+      ],
+      "default": "geplant",
+      "description": "Projektstatus"
+    }
+  },
+  "required": [
+    "name",
+    "technician_id",
+    "start_date",
+    "end_date"
+  ]
+}

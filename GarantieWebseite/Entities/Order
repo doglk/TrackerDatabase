@@ -1,0 +1,75 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "order_number": {
+      "type": "string",
+      "description": "Auftragsnummer"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titel des Auftrags"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschreibung"
+    },
+    "location": {
+      "type": "string",
+      "description": "Ort"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Startdatum"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Enddatum"
+    },
+    "assigned_technicians": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs der zugewiesenen Techniker"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "in_bearbeitung",
+        "abgeschlossen"
+      ],
+      "default": "offen",
+      "description": "Auftragsstatus"
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Archiviert"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "niedrig",
+        "mittel",
+        "hoch",
+        "dringend"
+      ],
+      "default": "mittel",
+      "description": "Priorit\u00e4t"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "title",
+    "location",
+    "start_date",
+    "end_date"
+  ]
+}
