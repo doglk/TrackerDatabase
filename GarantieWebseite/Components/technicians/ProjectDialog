@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Save } from "lucide-react";
+
+export default function ProjectDialog({ 
+  open, 
+  onOpenChange, 
+  technician,
+  onSave,
+  isSaving 
+}) {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    start_date: "",
+    end_date: "",
+    status: "geplant",
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setFormData({
+        name: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        status: "geplant",
+      });
+    }
+  }, [open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">
+            Neues Projekt für {technician?.name}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Projektname *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="z.B. Installation Bürogebäude"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Beschreibung</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Details zum Projekt..."
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Startdatum *</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="end_date">Enddatum *</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="geplant">Geplant</SelectItem>
+                <SelectItem value="laufend">Laufend</SelectItem>
+                <SelectItem value="abgeschlossen">Abgeschlossen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? 'Speichert...' : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
