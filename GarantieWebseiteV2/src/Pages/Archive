@@ -1,0 +1,213 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Archive as ArchiveIcon, 
+  Search, 
+  Download,
+  MapPin,
+  Calendar,
+  Users
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
+
+const formatDate = (dateString, formatString) => {
+  if (!dateString) return null;
+  try {
+    return format(parseISO(dateString), formatString, { locale: de });
+  } catch (e) {
+    return null;
+  }
+};
+
+export default function Archive() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const { data: archivedOrders = [], isLoading } = useQuery({
+    queryKey: ['archived-orders'],
+    queryFn: () => base44.entities.Order.filter({ archived: true }, '-updated_date'),
+  });
+
+  const { data: technicians = [] } = useQuery({
+    queryKey: ['technicians'],
+    queryFn: () => base44.entities.Technician.list(),
+  });
+
+  const getTechnicianNames = (techIds) => {
+    if (!techIds || techIds.length === 0) return "Nicht zugewiesen";
+    return techIds
+      .map(id => technicians.find(t => t.id === id)?.name || "Unbekannt")
+      .join(", ");
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Auftragsnr.', 'Titel', 'Ort', 'Startdatum', 'Enddatum', 'Status', 'Priorität', 'Abgeschlossen am'];
+    const rows = filteredOrders.map(o => [
+      o.order_number || '',
+      o.title || '',
+      o.location || '',
+      o.start_date || o.date || '',
+      o.end_date || '',
+      o.status || '',
+      o.priority || '',
+      o.updated_date ? format(new Date(o.updated_date), 'dd.MM.yyyy', { locale: de }) : ''
+    ]);
+    
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `archiv_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredOrders = archivedOrders.filter(order =>
+    order.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.order_number?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+            Archiv
+          </h1>
+          <p className="text-slate-600">
+            Alle abgeschlossenen Aufträge
+          </p>
+        </div>
+        <Button
+          onClick={exportToCSV}
+          disabled={filteredOrders.length === 0}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Exportieren
+        </Button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+        <Input
+          placeholder="Suche nach Titel, Ort oder Auftragsnummer..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 h-12 border-slate-300 shadow-sm"
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-6">
+              <Skeleton className="h-32 w-full" />
+            </Card>
+          ))}
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <Card className="p-12 text-center shadow-lg border-0">
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ArchiveIcon className="w-10 h-10 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">
+            {searchTerm ? 'Keine Aufträge gefunden' : 'Archiv ist leer'}
+          </h3>
+          <p className="text-slate-600">
+            {searchTerm 
+              ? 'Versuchen Sie andere Suchbegriffe' 
+              : 'Abgeschlossene Aufträge erscheinen hier'}
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredOrders.map((order) => {
+            const startDate = formatDate(order.start_date, "dd.MM.yyyy");
+            const endDate = formatDate(order.end_date, "dd.MM.yyyy");
+            const singleDate = formatDate(order.date, "dd.MM.yyyy");
+            const completedDate = order.updated_date ? format(new Date(order.updated_date), "dd.MM.yyyy 'um' HH:mm", { locale: de }) : null;
+            
+            return (
+              <Card key={order.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 shadow-lg">
+                <div className="flex flex-col lg:flex-row justify-between gap-4">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-xl font-bold text-slate-900">
+                            {order.title}
+                          </h3>
+                          {order.order_number && (
+                            <Badge variant="outline" className="text-xs">
+                              {order.order_number}
+                            </Badge>
+                          )}
+                        </div>
+                        {order.description && (
+                          <p className="text-slate-600 mb-3">{order.description}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <MapPin className="w-4 h-4 text-slate-400" />
+                        <span>{order.location}</span>
+                      </div>
+                      {startDate && endDate ? (
+                        <div className="flex items-center gap-2 text-slate-700">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <span>{startDate} - {endDate}</span>
+                        </div>
+                      ) : singleDate ? (
+                        <div className="flex items-center gap-2 text-slate-700">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <span>{singleDate}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center gap-2 text-slate-700 md:col-span-2">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <span>{getTechnicianNames(order.assigned_technicians)}</span>
+                      </div>
+                    </div>
+
+                    {completedDate && (
+                      <div className="pt-2 text-xs text-slate-500">
+                        Abgeschlossen am: {completedDate} Uhr
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2 lg:items-end">
+                    <Badge className="bg-green-100 text-green-800 border-green-200 border">
+                      ✓ Abgeschlossen
+                    </Badge>
+                    {order.priority && (
+                      <Badge className="bg-slate-100 text-slate-800 border-slate-200 border">
+                        {order.priority}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
